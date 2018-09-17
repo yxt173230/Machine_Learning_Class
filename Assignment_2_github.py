@@ -1,4 +1,5 @@
-# Assignment_2
+# Assignment_2: Stepwise Regression
+# Student Name: Yu-Hsuan Tseng
 
 
 import pandas as pd
@@ -7,7 +8,7 @@ import statsmodels.api as sm
 
 data = pd.read_csv('compustat_annual_2000_2017_with link information.csv')
 
-# Clean data
+## Clean data
 missing_percentage = data.isnull().sum()/data.shape[0]
 data1 = data.loc[:, missing_percentage < 0.7]
 data2 = data1._get_numeric_data()
@@ -17,38 +18,38 @@ X = data3.loc[:, data3.columns != 'oiadp']
 y = data3['oiadp']
 
 
-def stepwise_selection(X, y, 
-                       initial_list=[], 
-                       threshold_in=0.05, 
-                       threshold_out = 0.06, 
-                       verbose=True):
-# X - candidate predictor variables
-# y - Response
-# threshold_in - include a feature if its p-value < threshold_in
-# threshold_out - exclude a feature if its p-value > threshold_out
-# verbose - whether to print the sequence of inclusions and exclusions
-
-    included = list(initial_list)
+def stepwise_model(X, Y):
+	added = []
     while True:
         changed=False
         # forward step
-        excluded = list(set(X.columns)-set(included))
-        new_pval = pd.Series(index=excluded)
-        for new_column in excluded:
-            model = sm.OLS(y, sm.add_constant(pd.DataFrame(X[included+[new_column]]))).fit()
-            new_pval[new_column] = model.pvalues[new_column]
-        best_pval = new_pval.min()
-        if best_pval < threshold_in:
-            best_feature = new_pval.argmin()
-            included.append(best_feature)
+        candidates = list(set(X.columns)-set(added))
+        added_pvalue = pd.Series(index=candidates) # it has index but no value
+        for column in candidates:
+            model = sm.OLS(Y, sm.add_constant(pd.DataFrame(X[added+[column]]))).fit()
+            added_pvalue[column] = model.pvalues[column]
+        min_pvalue = added_pvalue.min()
+        if min_pvalue < 0.05:
+            best_candidates = added_pvalue.argmin() # Returns the indice of the minimum values
+            added.append(best_candidates)
             changed=True
-            if verbose:
-                print('Add  {:30} with p-value {:.6}'.format(best_feature, best_pval))
+
+        # backward step
+        model = sm.OLS(Y, sm.add_constant(pd.DataFrame(X[added]))).fit()
+        # use all coefs except intercept
+        p_values = model.pvalues.iloc[1:]
+        max_pvalue = p_values.max() # null if pvalues is empty
+        if max_pvalue > 0.10:
+            changed=True
+            worst_candidates = p_values.argmax()
+            added.remove(worst_candidates)
+
         if not changed:
             break
-    return included
+			
+    return added
 
-result = stepwise_selection(X, y)
+result = stepwise_model(X, Y)
 
-print('resulting predictors:')
+print('selected columns by doing Stepwise Regression:')
 print(result)

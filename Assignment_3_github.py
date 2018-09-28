@@ -19,8 +19,8 @@ y = data2['oiadp']
 
 
 
-
-#===== Part.1 Revise the in-class code to regression tree by using variance reduction=====#
+############################################################################################
+###### Part.1 Revise the in-class code to regression tree by using variance reduction ######
 
 training_data = X.join(y)
 columnlist = training_data.columns
@@ -107,8 +107,8 @@ def find_best_split(yourlist)
 	
 	
 	
-
-#===== Part.2 Use Sklearn ========================#
+###################################################
+###### Part.2 Use Sklearn #########################
 
 from sklearn.tree import DecisionTreeRegressor
 from sklearn import tree
